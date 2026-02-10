@@ -43,6 +43,8 @@ from openai import APIError, APIConnectionError, RateLimitError, OpenAI
 from src.memory_manager import MemoryManager
 from src.search_agent import SearchAgent
 from src.orchestrator import AutonomousOrchestrator
+from src.research_coordinator import ResearchCoordinator
+from src.report_formatter import ReportFormatter
 from src.conversation_manager import (
     ConversationManager,
     APIKeyNotFoundError,
@@ -91,8 +93,8 @@ def print_welcome() -> None:
     """환영 메시지를 출력합니다."""
     print()
     print("=" * 60)
-    print("🔍 AI 리서치 어시스턴트 v2.0")
-    print("   웹 검색 기능이 추가되었습니다!")
+    print("🔍 AI 리서치 어시스턴트 v3.0")
+    print("   멀티 에이전트 리포트 생성 기능이 추가되었습니다!")
     print("=" * 60)
     print()
     print("📌 사용 가능한 명령어:")
@@ -105,6 +107,8 @@ def print_welcome() -> None:
     print("  • memory-search <검색어> : 메모리 직접 검색")
     print("  • auto <목표>        : 🆕 자율 실행 모드")
     print("  • auto-stats / 자율통계 : 🆕 자율 실행 통계")
+    print("  • report <주제>      : 🆕 멀티에이전트 리포트 생성")
+    print("  • report-agents      : 🆕 에이전트 정보 보기")
     print()
     print("💡 검색 활용 팁:")
     print("  • '~에 대해 조사해줘' → 웹 검색 실행")
@@ -266,7 +270,13 @@ def handle_command(command: str, manager: ConversationManager) -> bool:
         print("사용법: auto <목표>")
         print("예시: auto AI 반도체 시장 동향 분석")
         return True
-    
+
+    # report만 입력 시 사용법 안내
+    if command == 'report':
+        print("사용법: report <주제>")
+        print("예시: report AI 반도체 시장 동향")
+        return True
+
     return False
 
 
@@ -303,6 +313,20 @@ def main() -> None:
             search_agent=search_agent,
         )
         print("✓ Autonomous Orchestrator Ready")
+
+        # ResearchCoordinator 초기화 (실패 시 coordinator=None, 기존 기능은 유지)
+        coordinator = None
+        try:
+            print("Initializing Research Coordinator...")
+            coordinator = ResearchCoordinator(
+                client=OpenAI(),
+                search_agent=search_agent,
+                memory_manager=memory_manager,
+            )
+            print("✓ Research Coordinator Ready (4 agents)")
+        except Exception as e:
+            logger.warning("Research Coordinator 초기화 실패 (report 명령 비활성화): %s", e)
+            print("⚠ Research Coordinator를 사용할 수 없습니다. (report 명령 제외)")
         
         # ConversationManager 초기화 (메모리 연결)
         try:
@@ -348,8 +372,8 @@ def main() -> None:
                 if user_input_lower in ['memory', '메모리']:
                     memory_manager.print_memory_dashboard()
                     continue
-                if user_input_lower.startswith('memory-search '):
-                    query = user_input[14:].strip()
+                if user_input_lower == "memory-search" or user_input_lower.startswith('memory-search '):
+                    query = user_input[14:].strip() if user_input_lower.startswith('memory-search ') else ""
                     if not query:
                         print("사용법: memory-search <검색어>")
                         continue
@@ -394,7 +418,48 @@ def main() -> None:
                         print(f"  평균 품질 점수: {qs.get('average_score', 0):.1f}/10")
                         print(f"  품질 통과율: {qs.get('pass_rate', 0) * 100:.1f}%")
                     continue
-                
+
+                # 멀티 에이전트 리포트 생성 (report <주제>)
+                if user_input_lower.startswith("report "):
+                    topic = user_input[7:].strip()
+                    if not topic:
+                        print("사용법: report <주제>")
+                        print("예시: report AI 반도체 시장 동향")
+                        continue
+                    if coordinator is None:
+                        print("❌ 리포트 생성 기능을 사용할 수 없습니다. (Coordinator 초기화 실패)")
+                        continue
+                    print(f"\n📄 멀티 에이전트 리포트 생성 시작: {topic}")
+                    print("━" * 50)
+                    try:
+                        result = coordinator.run(topic, verbose=True)
+                        save_result = ReportFormatter.save_report(
+                            result["report"],
+                            {
+                                "title": topic,
+                                "agent_score": result["score"],
+                                "source_count": result["research_summary"]["source_count"],
+                                "revision_count": result["revision_count"],
+                            },
+                        )
+                        ReportFormatter.print_report_summary(save_result, result["score"])
+                    except Exception as e:
+                        print(f"❌ 리포트 생성 오류: {e}")
+                    continue
+
+                # 에이전트 정보 보기 (report-agents)
+                if user_input_lower == "report-agents":
+                    if coordinator is None:
+                        print("❌ 에이전트 정보를 사용할 수 없습니다. (Coordinator 초기화 실패)")
+                        continue
+                    info = coordinator.get_agents_info()
+                    print("\n📋 리서치 에이전트 정보")
+                    print("-" * 40)
+                    for a in info:
+                        print(f"  • {a['name']}: {a['role']}")
+                    print()
+                    continue
+
                 # 명령어 처리 (handle_command 함수 사용)
                 if handle_command(user_input_lower, conversation_manager):
                     # 명령어가 처리되었으면 (종료 명령어인 경우 break)
