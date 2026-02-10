@@ -1,0 +1,21 @@
+## 웹 검색 결과: 'Python web framework'
+검색 시간: 1.17초
+
+### 📋 요약
+Django, Flask, and FastAPI are popular Python web frameworks. Django is robust for large applications, Flask is lightweight for small projects, and FastAPI is fast and modern for API development. Choose based on project needs.
+
+### 📰 상세 검색 결과
+
+**[1] Top Python Web Development Frameworks in 2025 - Reflex**
+- 출처: https://reflex.dev/blog/2024-12-20-python-comparison/
+- 관련도: 1.00
+- 내용: With frameworks catering to various use cases, from full-stack web development to data visualization, Python offers something for every developer. Reflex represents a shift in web development by enabling developers to build their full-stack web apps entirely in a **single** language, Python. With it...
+
+**[2] Which Is the Best Python Web Framework: Django, Flask, or FastAPI?**
+- 출처: https://blog.jetbrains.com/pycharm/2025/02/django-flask-fastapi/
+- 관련도: 1.00
+- 내용: Read this blog to find the best Python web framework for your project. Compare Django, Flask, and FastAPI – their strengths, trade-offs,
+
+### 📚 참고 출처
+1. https://reflex.dev/blog/2024-12-20-python-comparison/
+2. https://blog.jetbrains.com/pycharm/2025/02/django-flask-fastapi/

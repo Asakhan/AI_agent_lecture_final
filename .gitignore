@@ -1,0 +1,34 @@
+# 환경 변수
+.env
+
+# 가상 환경
+venv/
+env/
+ENV/
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 기타
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+data/*.json
+data/chroma_db/
+data/test_chroma_db/
+data/conversations/
